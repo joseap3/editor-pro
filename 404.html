@@ -2,11 +2,14 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <meta http-equiv="refresh" content="0; url=./index.html">
-  <title>Redirecionando...</title>
+  <title>TEXT EDITOR PRO ULTRA</title>
+  <script>
+    // Redireciona para index.html na mesma pasta
+    var base = window.location.href.substring(0, window.location.href.lastIndexOf('/') + 1);
+    window.location.replace(base + 'index.html');
+  </script>
 </head>
 <body>
-  <p>Redirecionando para o app...</p>
-  <script>window.location.href = './index.html';</script>
+  <p>Redirecionando...</p>
 </body>
 </html>

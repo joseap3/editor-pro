@@ -77,7 +77,7 @@ const AppMain = (() => {
     // Register service worker
     if ('serviceWorker' in navigator) {
       try {
-        const reg = await navigator.serviceWorker.register('./sw.js', { scope: '/' });
+        const reg = await navigator.serviceWorker.register('./sw.js');
         console.log('[SW] Registered:', reg.scope);
       } catch (e) {
         console.warn('[SW] Registration failed:', e);
