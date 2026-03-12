@@ -142,7 +142,7 @@ button { font-family:var(--font-ui); }
 #main-area.with-preview { flex-direction:row; }
 
 /* ── Editor panels ── */
-.editor-panel { flex:1; display:none; flex-direction:column; overflow:hidden; background:var(--panel-bg); }
+.editor-panel { flex:1; display:none; flex-direction:column; overflow:hidden; background:var(--panel-bg); min-height:0; }
 .editor-panel[style*="flex"] { display:flex; }
 #panel-code { display:flex; }
 #monaco-editor { flex:1; min-height:0; }
@@ -175,15 +175,15 @@ button { font-family:var(--font-ui); }
 #md-preview ul,#md-preview ol { padding-left:22px; margin:.5em 0; }
 #md-preview hr { border:none; border-top:1px solid var(--border); margin:1.5em 0; }
 
-#panel-notepad { display:none; }
-#notepad-area { flex:1; resize:none; border:none; outline:none; background:transparent; color:var(--text); font-family:var(--font-ui); font-size:14px; padding:24px 36px; line-height:1.8; position:relative; z-index:2; }
+#panel-notepad { display:none; flex-direction:column; }
+#notepad-area { flex:1; resize:none; border:none; outline:none; background:transparent; color:var(--text); font-family:var(--font-ui); font-size:14px; padding:24px 36px; line-height:1.8; position:relative; z-index:2; overflow-y:auto; overflow-x:hidden; word-wrap:break-word; overflow-wrap:break-word; white-space:pre-wrap; box-sizing:border-box; width:100%; }
 [data-theme="hacker"] #notepad-area { font-family:var(--font-mono); color:#00ff41; }
 
 /* ── Textarea highlight overlay ── */
-.textarea-wrap { position:relative; flex:1; display:flex; overflow:hidden; }
+.textarea-wrap { position:relative; flex:1; display:flex; overflow:auto; min-height:0; }
 .hl-layer {
   position:absolute; inset:0; z-index:1; pointer-events:none;
-  overflow:hidden; white-space:pre-wrap; word-break:break-word; overflow-wrap:break-word;
+  overflow:hidden; white-space:pre-wrap; word-break:break-word; overflow-wrap:break-word; pointer-events:none;
   color:transparent; background:var(--panel-bg); box-sizing:border-box; border:1px solid transparent;
 }
 .textarea-wrap textarea { position:relative; z-index:2; background:transparent!important; flex:1; resize:none; }
@@ -390,7 +390,7 @@ body.terminal-open #app { padding-bottom:240px; }
   .modal { border-radius:16px 16px 0 0; max-width:100%; border-bottom:none; }
 
   /* Notepad/editor font size */
-  #notepad-area { font-size:14px; padding:14px; }
+  #notepad-area { font-size:14px; padding:14px; word-wrap:break-word; overflow-wrap:break-word; }
   .ql-editor { padding:14px 16px; }
   #md-source { font-size:13px; padding:12px; }
 
