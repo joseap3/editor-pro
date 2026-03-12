@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>TEXT EDITOR PRO ULTRA</title>
+  <meta name="description" content="Editor profissional: Código, Texto Rico, Markdown e Terminal">
+
+  <!-- PWA obrigatório -->
+  <link rel="manifest" href="./manifest.json">
+  <meta name="theme-color" content="#58a6ff">
+
+  <!-- iOS PWA -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="EditorUltra">
+  <link rel="apple-touch-icon" href="./icons/icon-192.png">
+
+  <!-- Android/Chrome -->
+  <meta name="mobile-web-app-capable" content="yes">
+
+  <link rel="stylesheet" href="./style.css">
+  <style>
+    .search-match-all    { background:rgba(227,179,65,.30)!important; border-radius:2px; }
+    .search-match-active { background:rgba(249,130,108,.55)!important; border-radius:2px; outline:1px solid #f9826c; }
+  </style>
+
+  <!-- Quill -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/quill/1.3.7/quill.snow.min.css" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/quill/1.3.7/quill.min.js"></script>
+  <!-- Monaco -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs/loader.min.js"></script>
+  <!-- Marked -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/9.1.6/marked.min.js"></script>
+  <!-- CryptoJS -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.2.0/crypto-js.min.js"></script>
+  <!-- Mammoth -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+  <!-- jsPDF -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <!-- pdf.js -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <script>
+    if (typeof pdfjsLib !== 'undefined')
+      pdfjsLib.GlobalWorkerOptions.workerSrc =
+        'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+  </script>
+</head>
+<body data-theme="dark">
+
+<div id="app">
+
+  <!-- ═══════ TITLEBAR ═══════ -->
+  <header id="titlebar">
+    <div id="tl-left">
+      <button id="btn-hamburger" class="icon-btn" title="Menu" aria-label="Menu">☰</button>
+      <div class="app-logo">
+        <div class="app-logo-icon">T</div>
+        <span class="logo-text">TEXT EDITOR PRO ULTRA</span>
+      </div>
+      <nav class="menu-bar" id="desktop-menu">
+        <button class="menu-btn" onclick="document.getElementById('file-input').click()">Arquivo</button>
+        <button class="menu-btn" onclick="AppMain.saveActive()">Salvar</button>
+        <button class="menu-btn" onclick="UI.openExport()">Exportar</button>
+        <button class="menu-btn" onclick="EditorManager.openSearch()">Buscar</button>
+        <button class="menu-btn" onclick="UI.toggleTerminal()">Terminal</button>
+      </nav>
+    </div>
+    <div id="tl-center"><span id="active-file-name">Untitled</span></div>
+    <div id="tl-right">
+      <div id="datetime-display">--/--/---- --:--:--</div>
+      <div class="theme-btns">
+        <button class="theme-btn" data-t="dark"   title="Escuro">🌙</button>
+        <button class="theme-btn" data-t="light"  title="Claro">☀️</button>
+        <button class="theme-btn" data-t="hacker" title="Hacker">⬛</button>
+      </div>
+      <button class="icon-btn" id="btn-pwa-install" title="Instalar App" style="display:none">📲</button>
+    </div>
+  </header>
+
+  <!-- ═══════ MOBILE DRAWER ═══════ -->
+  <div id="mobile-drawer" aria-hidden="true">
+    <div id="drawer-backdrop"></div>
+    <div id="drawer-panel" role="dialog" aria-label="Menu">
+      <div class="drawer-header">
+        <span>Menu</span>
+        <button id="btn-drawer-close" aria-label="Fechar menu">✕</button>
+      </div>
+      <button class="drawer-item" onclick="document.getElementById('file-input').click();UI.closeDrawer()">📂 Abrir Arquivo</button>
+      <button class="drawer-item" onclick="AppMain.saveActive();UI.closeDrawer()">💾 Salvar (Ctrl+S)</button>
+      <button class="drawer-item" onclick="UI.openExport();UI.closeDrawer()">📤 Exportar</button>
+      <button class="drawer-item" onclick="EditorManager.openSearch();UI.closeDrawer()">🔍 Buscar (Ctrl+F)</button>
+      <button class="drawer-item" onclick="UI.toggleTerminal();UI.closeDrawer()">⌨ Terminal</button>
+      <button class="drawer-item" onclick="UI.togglePreview();UI.closeDrawer()">🌐 Preview</button>
+      <div class="drawer-sep"></div>
+      <button class="drawer-item" onclick="UI.openEncrypt();UI.closeDrawer()">🔒 Criptografar</button>
+      <button class="drawer-item" onclick="UI.openRename();UI.closeDrawer()">✏ Renomear</button>
+      <button class="drawer-item" id="drawer-pwa-btn" onclick="AppMain.installPWA();UI.closeDrawer()" style="display:none">📲 Instalar App</button>
+      <div class="drawer-sep"></div>
+      <div class="drawer-section-title">Temas</div>
+      <div class="drawer-themes">
+        <button class="theme-btn" data-t="dark">🌙 Escuro</button>
+        <button class="theme-btn" data-t="light">☀️ Claro</button>
+        <button class="theme-btn" data-t="hacker">⬛ Hacker</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════ TOOLBAR ═══════ -->
+  <div id="toolbar-area">
+    <div id="tabs-bar">
+      <div id="tabs-container"></div>
+    </div>
+    <div id="mode-toolbar">
+      <button class="mode-btn active" data-mode="code">⟨/⟩ Código</button>
+      <button class="mode-btn" data-mode="word">📝 Texto</button>
+      <button class="mode-btn" data-mode="markdown">＃ Markdown</button>
+      <button class="mode-btn" data-mode="notepad">📋 Notas</button>
+      <div class="toolbar-sep"></div>
+      <button class="toolbar-btn" id="btn-new">＋ Novo</button>
+      <button class="toolbar-btn" id="btn-open">📂 Abrir</button>
+      <button class="toolbar-btn" id="btn-save">💾 Salvar</button>
+      <button class="toolbar-btn" id="btn-export">📤 Exportar</button>
+      <div class="toolbar-sep"></div>
+      <button class="toolbar-btn" id="btn-search">🔍 Buscar</button>
+      <button class="toolbar-btn" id="btn-encrypt">🔒 Criptografar</button>
+      <button class="toolbar-btn" id="btn-rename">✏ Renomear</button>
+      <button class="toolbar-btn" id="btn-terminal">⌨ Terminal</button>
+      <button class="toolbar-btn" id="btn-preview">🌐 Preview</button>
+    </div>
+    <div id="word-toolbar" style="display:none">
+      <div id="quill-toolbar">
+        <span class="ql-formats"><select class="ql-font"></select><select class="ql-size"></select></span>
+        <span class="ql-formats"><button class="ql-bold"></button><button class="ql-italic"></button><button class="ql-underline"></button><button class="ql-strike"></button></span>
+        <span class="ql-formats"><select class="ql-color"></select><select class="ql-background"></select></span>
+        <span class="ql-formats"><button class="ql-list" value="ordered"></button><button class="ql-list" value="bullet"></button><select class="ql-align"></select></span>
+        <span class="ql-formats"><button class="ql-blockquote"></button><button class="ql-code-block"></button><button class="ql-link"></button></span>
+        <span class="ql-formats"><button class="ql-clean"></button></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════ EDITOR PANELS ═══════ -->
+  <main id="main-area">
+
+    <!-- Search panel (floating) -->
+    <div id="search-panel" style="display:none">
+      <div id="search-row1">
+        <input id="search-input" type="text" placeholder="Buscar..." autocomplete="off" spellcheck="false">
+        <span id="search-count"></span>
+        <button class="sp-btn" id="btn-prev-match" title="Anterior">↑</button>
+        <button class="sp-btn" id="btn-next-match" title="Próximo">↓</button>
+        <button class="sp-btn" id="btn-search-close" title="Fechar">✕</button>
+      </div>
+      <div id="search-row2">
+        <input id="replace-input" type="text" placeholder="Substituir por..." autocomplete="off">
+        <button class="sp-btn" id="btn-replace-one">1×</button>
+        <button class="sp-btn" id="btn-replace-all">Todos</button>
+        <label class="sp-check"><input type="checkbox" id="search-case"> Aa</label>
+        <label class="sp-check"><input type="checkbox" id="search-regex"> .*</label>
+      </div>
+    </div>
+
+    <!-- CODE panel -->
+    <div class="editor-panel" id="panel-code" style="display:flex">
+      <div id="monaco-editor"></div>
+    </div>
+
+    <!-- WORD panel -->
+    <div class="editor-panel" id="panel-word">
+      <div id="quill-editor"></div>
+    </div>
+
+    <!-- MARKDOWN panel -->
+    <div class="editor-panel" id="panel-markdown" style="flex-direction:row">
+      <div id="md-source-pane">
+        <div class="pane-header"><span class="pane-dot dot-edit"></span> Fonte</div>
+        <div class="textarea-wrap" id="md-source-wrap">
+          <div class="hl-layer" id="md-source-hl"></div>
+          <textarea id="md-source" spellcheck="false" placeholder="# Escreva Markdown aqui..."></textarea>
+        </div>
+      </div>
+      <div id="md-preview-pane">
+        <div class="pane-header"><span class="pane-dot dot-preview"></span> Preview</div>
+        <div id="md-preview"></div>
+      </div>
+    </div>
+
+    <!-- NOTEPAD panel -->
+    <div class="editor-panel" id="panel-notepad">
+      <div class="textarea-wrap" id="notepad-wrap">
+        <div class="hl-layer" id="notepad-hl"></div>
+        <textarea id="notepad-area" spellcheck="true" placeholder="Escreva suas notas aqui..."></textarea>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- ═══════ STATUSBAR ═══════ -->
+  <footer id="statusbar">
+    <div id="stats-bar"><span>Palavras: <b>0</b></span><span>Linhas: <b>1</b></span><span>Chars: <b>0</b></span></div>
+    <div id="status-right">
+      <span id="status-mode">CODE</span>
+      <span id="status-offline" style="display:none">📵 Offline</span>
+    </div>
+  </footer>
+
+  <!-- ═══════ TERMINAL ═══════ -->
+  <div id="terminal-pane">
+    <div id="terminal-resize"></div>
+    <div id="terminal-titlebar">
+      <div class="terminal-title">
+        <span class="terminal-dot t-red-dot"></span>
+        <span class="terminal-dot t-yellow-dot"></span>
+        <span class="terminal-dot t-green-dot"></span>
+        <span>Terminal</span>
+      </div>
+      <button class="icon-btn" id="btn-terminal-close" title="Fechar Terminal">✕</button>
+    </div>
+    <div id="terminal-output"></div>
+    <div id="terminal-input-row">
+      <span class="t-prompt">ultra</span><span class="t-dim">:</span><span class="t-blue">~</span><span class="t-dim">$</span>&nbsp;
+      <input id="terminal-input" type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Digite help para ajuda...">
+    </div>
+  </div>
+
+  <!-- ═══════ PREVIEW PANEL ═══════ -->
+  <div id="preview-panel" class="hidden">
+    <div id="preview-titlebar">
+      <div class="preview-title">🌐 <span id="preview-label">Preview</span> <span id="preview-badge">HTML</span></div>
+      <div class="preview-controls">
+        <button class="preview-btn" id="btn-preview-refresh">↺</button>
+        <button class="preview-btn" id="btn-preview-newwin">⬡</button>
+        <button class="preview-btn" id="btn-preview-side">⬜ Lado</button>
+        <button class="preview-btn danger" id="btn-preview-close">✕</button>
+      </div>
+    </div>
+    <div id="preview-resize-h"></div>
+    <div id="preview-body">
+      <iframe id="preview-frame" sandbox="allow-scripts allow-same-origin allow-forms" title="Preview"></iframe>
+      <div id="preview-empty">
+        <div style="font-size:3rem">🌐</div>
+        <p>Sem conteúdo para visualizar</p>
+        <small>Suporta HTML, JS, CSS, Markdown, Texto</small>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════ CONTEXT MENU ═══════ -->
+  <div id="context-menu" role="menu">
+    <div class="ctx-item" id="ctx-cut"       role="menuitem">✂ Recortar</div>
+    <div class="ctx-item" id="ctx-copy"      role="menuitem">📋 Copiar</div>
+    <div class="ctx-item" id="ctx-paste"     role="menuitem">📌 Colar</div>
+    <div class="ctx-sep"></div>
+    <div class="ctx-item" id="ctx-selectall" role="menuitem">☐ Selecionar Tudo</div>
+    <div class="ctx-sep"></div>
+    <div class="ctx-item" id="ctx-search"    role="menuitem">🔍 Buscar selecionado</div>
+    <div class="ctx-item" id="ctx-save"      role="menuitem">💾 Salvar</div>
+  </div>
+
+</div><!-- #app -->
+
+<!-- ═══════ MOBILE BOTTOM NAV ═══════ -->
+<nav id="mobile-nav" aria-label="Navegação">
+  <button class="mob-btn active" data-mode="code">⟨/⟩<span>Código</span></button>
+  <button class="mob-btn" data-mode="word">📝<span>Texto</span></button>
+  <button class="mob-btn" data-mode="markdown">＃<span>MD</span></button>
+  <button class="mob-btn" data-mode="notepad">📋<span>Notas</span></button>
+  <button class="mob-btn" id="mob-search">🔍<span>Buscar</span></button>
+  <button class="mob-btn" id="mob-save">💾<span>Salvar</span></button>
+</nav>
+
+<!-- ═══════ MODALS ═══════ -->
+<div class="modal-overlay hidden" id="export-modal">
+  <div class="modal">
+    <h2>📤 Exportar Arquivo</h2>
+    <label>Nome do arquivo</label>
+    <input type="text" id="export-filename" placeholder="documento.txt">
+    <label>Formato</label>
+    <select id="export-format">
+      <option value="txt">Texto (.txt)</option>
+      <option value="md">Markdown (.md)</option>
+      <option value="html">HTML (.html)</option>
+      <option value="json">JSON (.json)</option>
+      <option value="pdf">PDF (.pdf)</option>
+    </select>
+    <div class="modal-actions">
+      <button class="modal-btn cancel" onclick="document.getElementById('export-modal').classList.add('hidden')">Cancelar</button>
+      <button class="modal-btn primary" id="btn-do-export">💾 Exportar</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay hidden" id="encrypt-modal">
+  <div class="modal">
+    <h2>🔒 Criptografia AES</h2>
+    <p id="encrypt-status"></p>
+    <label>Senha</label>
+    <input type="password" id="encrypt-password" placeholder="Digite uma senha segura...">
+    <p class="modal-note">⚠ Sem a senha o arquivo não pode ser recuperado.</p>
+    <div class="modal-actions">
+      <button class="modal-btn cancel" onclick="document.getElementById('encrypt-modal').classList.add('hidden')">Cancelar</button>
+      <button class="modal-btn" id="btn-do-decrypt">🔓 Descriptografar</button>
+      <button class="modal-btn primary" id="btn-do-encrypt">🔒 Criptografar</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay hidden" id="rename-modal">
+  <div class="modal">
+    <h2>✏ Renomear Arquivo</h2>
+    <label>Novo nome</label>
+    <input type="text" id="rename-input" placeholder="nome-do-arquivo.txt">
+    <div class="modal-actions">
+      <button class="modal-btn cancel" onclick="document.getElementById('rename-modal').classList.add('hidden')">Cancelar</button>
+      <button class="modal-btn primary" id="btn-do-rename">Renomear</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay hidden" id="lang-modal">
+  <div class="modal">
+    <h2>🌐 Linguagem do Código</h2>
+    <label>Selecione a linguagem</label>
+    <select id="lang-select">
+      <option value="plaintext">Texto</option>
+      <option value="html">HTML</option>
+      <option value="css">CSS</option>
+      <option value="javascript">JavaScript</option>
+      <option value="typescript">TypeScript</option>
+      <option value="json">JSON</option>
+      <option value="python">Python</option>
+      <option value="java">Java</option>
+      <option value="cpp">C++</option>
+      <option value="c">C</option>
+      <option value="csharp">C#</option>
+      <option value="php">PHP</option>
+      <option value="ruby">Ruby</option>
+      <option value="go">Go</option>
+      <option value="rust">Rust</option>
+      <option value="sql">SQL</option>
+      <option value="shell">Shell</option>
+      <option value="xml">XML</option>
+      <option value="yaml">YAML</option>
+      <option value="markdown">Markdown</option>
+    </select>
+    <div class="modal-actions">
+      <button class="modal-btn cancel" onclick="document.getElementById('lang-modal').classList.add('hidden')">Cancelar</button>
+      <button class="modal-btn primary" id="btn-do-lang">Aplicar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast container -->
+<div id="toast-container"></div>
+
+<!-- Hidden file input -->
+<input type="file" id="file-input" style="display:none" multiple
+  accept=".txt,.md,.json,.js,.ts,.html,.htm,.css,.py,.java,.cpp,.c,.cs,.php,.rb,.go,.rs,.xml,.yaml,.yml,.sql,.sh,.docx,.pdf">
+
+<!-- Scripts -->
+<script src="./backup.js"></script>
+<script src="./crypto.js"></script>
+<script src="./tabs.js"></script>
+<script src="./editor.js"></script>
+<script src="./terminal.js"></script>
+<script src="./app.js"></script>
+</body>
+</html>
